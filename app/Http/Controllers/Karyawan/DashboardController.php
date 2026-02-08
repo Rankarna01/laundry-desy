@@ -11,21 +11,16 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // 1. STATISTIK KARTU
-        $masukHariIni = Transaksi::whereDate('created_at', Carbon::today())->count();
-        $sedangProses = Transaksi::where('status_laundry', 'Proses')->count();
+        // 1. STATISTIK (Sesuaikan enum baru: 'Dicuci')
+        $masukHariIni = Transaksi::whereDate('tgl_masuk', Carbon::today())->count();
+        $sedangProses = Transaksi::where('status_laundry', 'Dicuci')->count(); // GANTI 'Proses' jadi 'Dicuci'
         $siapDiambil  = Transaksi::where('status_laundry', 'Selesai')->count();
-        
-        // Menunggu Diambil = Status 'Selesai' (Sama dengan Siap Diambil)
-        // Atau kita bisa ganti jadi 'Antrian Pending' agar lebih informatif
         $antrianPending = Transaksi::where('status_laundry', 'Pending')->count();
 
-        // 2. TABEL DAFTAR TUGAS (Cucian yang HARUS diproses)
-        // Kita ambil yang statusnya 'Pending' atau 'Proses'
-        // Diurutkan dari yang paling lama (Priority First)
+        // 2. TABEL TUGAS (Pending & Dicuci)
         $tugasCucian = Transaksi::with(['user', 'paket'])
-            ->whereIn('status_laundry', ['Pending', 'Proses'])
-            ->orderBy('created_at', 'asc') 
+            ->whereIn('status_laundry', ['Pending', 'Dicuci']) // GANTI
+            ->orderBy('tgl_masuk', 'asc') // Urutkan berdasarkan tgl_masuk
             ->get();
 
         return view('pages.karyawan.dashboard', compact(
@@ -33,23 +28,19 @@ class DashboardController extends Controller
         ));
     }
 
-    // Fitur Update Status Cepat dari Dashboard
     public function updateStatusCepat(Request $request, $id)
     {
         $trx = Transaksi::findOrFail($id);
         
-        // Logika Tombol Cepat:
-        // Jika Pending -> Ubah ke Proses
-        // Jika Proses  -> Ubah ke Selesai
-        
+        // LOGIKA BARU: Pending -> Dicuci -> Selesai
         if ($trx->status_laundry == 'Pending') {
-            $trx->update(['status_laundry' => 'Proses']);
-            $pesan = 'Status berubah menjadi SEDANG DIPROSES.';
-        } elseif ($trx->status_laundry == 'Proses') {
+            $trx->update(['status_laundry' => 'Dicuci']); // Update status jadi Dicuci
+            $pesan = 'Status berubah: SEDANG DICUCI.';
+        } elseif ($trx->status_laundry == 'Dicuci') {
             $trx->update(['status_laundry' => 'Selesai']);
             $pesan = 'Cucian SELESAI dan Siap Diambil.';
         } else {
-            return back(); // Tidak melakukan apa-apa jika status lain
+            return back(); 
         }
 
         return back()->with('success', $pesan);

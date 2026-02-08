@@ -1,153 +1,158 @@
 @extends('layouts.app')
 
-@section('title', 'Manajemen Transaksi')
+@section('title', 'Data Transaksi')
 
 @section('content')
 
     <div class="flex justify-between items-center mb-6">
         <div>
             <h1 class="text-2xl font-bold text-slate-800">Data Transaksi</h1>
-            <p class="text-slate-500 text-sm">Kelola semua transaksi laundry masuk</p>
+            <p class="text-slate-500 text-sm">Kelola semua transaksi laundry</p>
         </div>
-        <a href="{{ route('transaksi.create') }}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition shadow-md flex items-center gap-2">
-            <i class="fa-solid fa-plus"></i> Transaksi Baru
+        <a href="{{ route('transaksi.create') }}" class="bg-blue-600 text-white px-5 py-2.5 rounded-lg shadow-md hover:bg-blue-700 transition flex items-center gap-2 transform hover:-translate-y-0.5">
+            <i class="fa-solid fa-plus"></i>
+            <span>Transaksi Baru</span>
         </a>
     </div>
 
-    @if(session('success'))
-        <x-alert type="success" :message="session('success')" />
-    @endif
+    @if(session('success')) <x-alert type="success" :message="session('success')" /> @endif
 
-    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+    <div class="bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-left text-slate-500">
-                <thead class="text-xs text-slate-700 uppercase bg-slate-50 border-b border-slate-100">
+                <thead class="text-xs text-slate-700 uppercase bg-slate-50/50 border-b border-slate-100">
                     <tr>
-                        <th class="px-6 py-3">Kode & Tgl</th>
-                        <th class="px-6 py-3">Pelanggan</th>
-                        <th class="px-6 py-3">Paket</th>
-                        <th class="px-6 py-3">Berat / Total</th>
-                        <th class="px-6 py-3">Status Laundry</th>
-                        <th class="px-6 py-3">Pembayaran</th>
-                        <th class="px-6 py-3 text-center">Aksi</th>
+                        <th class="px-6 py-4">ID Transaksi</th>
+                        <th class="px-6 py-4">Pelanggan</th>
+                        <th class="px-6 py-4">Layanan</th>
+                        <th class="px-6 py-4">Tagihan</th>
+                        <th class="px-6 py-4 text-center">Status Laundry</th>
+                        <th class="px-6 py-4 text-center">Pembayaran</th>
+                        <th class="px-6 py-4 text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-slate-100">
                     @forelse($transaksis as $trx)
-                    <tr class="bg-white border-b hover:bg-slate-50 transition">
+                    <tr class="hover:bg-slate-50/80 transition duration-150">
                         
                         <td class="px-6 py-4">
-                            <span class="block font-bold text-slate-800">{{ $trx->kode_transaksi }}</span>
-                            <span class="text-xs text-slate-400">{{ $trx->created_at->format('d M Y H:i') }}</span>
+                            <div class="font-bold text-slate-800">#{{ $trx->kode_transaksi }}</div>
+                            <div class="text-xs text-slate-400 mt-1">
+                                <i class="fa-regular fa-calendar-days mr-1"></i>
+                                {{ $trx->tgl_masuk->format('d M Y') }}
+                            </div>
                         </td>
 
-                        <td class="px-6 py-4 font-medium text-slate-900">
-                            {{ $trx->user->name ?? 'Guest' }}
-                        </td>
-
-                        <td class="px-6 py-4">
-                            <span class="bg-slate-100 text-slate-600 text-xs px-2 py-1 rounded border border-slate-200">
-                                {{ $trx->paket->nama_paket }}
-                            </span>
-                        </td>
-
-                        <td class="px-6 py-4">
-                            <div class="text-slate-800 font-bold">Rp {{ number_format($trx->total_harga, 0, ',', '.') }}</div>
-                            <div class="text-xs text-slate-500">{{ $trx->berat }} Kg</div>
+                        <td class="px-6 py-4 font-medium text-slate-700">
+                            {{ $trx->user->name }}
+                            <div class="text-xs text-slate-400 font-normal">{{ $trx->user->no_hp ?? '-' }}</div>
                         </td>
 
                         <td class="px-6 py-4">
+                            <span class="text-slate-700 font-medium">{{ $trx->paket->nama_paket }}</span>
+                            <div class="text-xs text-slate-500 mt-0.5">{{ $trx->berat }} Kg</div>
+                        </td>
+
+                        <td class="px-6 py-4 font-bold text-slate-800">
+                            Rp {{ number_format($trx->total_harga, 0, ',', '.') }}
+                        </td>
+
+                        <td class="px-6 py-4 text-center">
                             @php
-                                $statusColor = match($trx->status_laundry) {
-                                    'Pending' => 'bg-slate-100 text-slate-600',
-                                    'Proses' => 'bg-yellow-100 text-yellow-700',
-                                    'Selesai' => 'bg-blue-100 text-blue-700',
-                                    'Diambil' => 'bg-green-100 text-green-700',
+                                $badgeClass = match($trx->status_laundry) {
+                                    'Selesai' => 'bg-green-100 text-green-700 ring-1 ring-green-200',
+                                    'Diambil' => 'bg-slate-100 text-slate-700 ring-1 ring-slate-200',
+                                    'Dicuci'  => 'bg-yellow-100 text-yellow-700 ring-1 ring-yellow-200 animate-pulse',
+                                    default   => 'bg-red-50 text-red-600 ring-1 ring-red-100' // Pending
+                                };
+                                $icon = match($trx->status_laundry) {
+                                    'Selesai' => 'fa-check',
+                                    'Diambil' => 'fa-bag-shopping',
+                                    'Dicuci'  => 'fa-spin fa-spinner',
+                                    default   => 'fa-clock'
                                 };
                             @endphp
-                            <span class="{{ $statusColor }} px-2.5 py-1 rounded text-xs font-semibold">
-                                {{ $trx->status_laundry }}
+                            <span class="{{ $badgeClass }} px-3 py-1 rounded-full text-xs font-bold inline-flex items-center gap-1.5">
+                                <i class="fa-solid {{ $icon }}"></i> {{ $trx->status_laundry }}
                             </span>
                         </td>
 
-                        <td class="px-6 py-4">
-                            @if($trx->status_bayar == 'Lunas')
-                                <span class="text-green-600 font-bold flex items-center gap-1 text-xs">
-                                    <i class="fa-solid fa-check-circle"></i> Lunas
-                                </span>
-                            @else
-                                <span class="text-red-500 font-bold flex items-center gap-1 text-xs">
-                                    <i class="fa-solid fa-circle-xmark"></i> Belum
-                                </span>
-                            @endif
+                        <td class="px-6 py-4 text-center">
+                            @php
+                                $bayarClass = match($trx->status_bayar) {
+                                    'Lunas' => 'text-green-600 bg-green-50 border border-green-100',
+                                    'DP'    => 'text-orange-600 bg-orange-50 border border-orange-100',
+                                    default => 'text-red-600 bg-red-50 border border-red-100'
+                                };
+                            @endphp
+                            <span class="{{ $bayarClass }} px-2.5 py-0.5 rounded text-xs font-bold uppercase tracking-wide">
+                                {{ $trx->status_bayar }}
+                            </span>
                         </td>
 
                         <td class="px-6 py-4 text-center">
                             <div class="flex items-center justify-center gap-2">
-                                <button onclick="openModal('modalEdit{{ $trx->id }}')" class="bg-yellow-50 text-yellow-600 hover:bg-yellow-100 p-2 rounded transition" title="Update Status">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </button>
                                 
-                                <a href="#" class="bg-blue-50 text-blue-600 hover:bg-blue-100 p-2 rounded transition" title="Cetak Struk">
-                                    <i class="fa-solid fa-print"></i>
+                                <a href="{{ route('transaksi.cetak', $trx->id) }}" target="_blank" 
+                                   class="group relative w-8 h-8 flex items-center justify-center bg-indigo-50 text-indigo-600 rounded-lg hover:bg-indigo-600 hover:text-white transition-all duration-200 shadow-sm border border-indigo-100" 
+                                   title="Cetak Struk">
+                                    <i class="fa-solid fa-receipt"></i>
                                 </a>
 
-                                <form action="{{ route('transaksi.destroy', $trx->id) }}" method="POST" onsubmit="return confirm('Yakin hapus data ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="bg-red-50 text-red-600 hover:bg-red-100 p-2 rounded transition" title="Hapus">
-                                        <i class="fa-solid fa-trash"></i>
+                                <button onclick="openModal('modalEdit{{ $trx->id }}')" 
+                                    class="group relative w-8 h-8 flex items-center justify-center bg-amber-50 text-amber-600 rounded-lg hover:bg-amber-500 hover:text-white transition-all duration-200 shadow-sm border border-amber-100" 
+                                    title="Update Status">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+
+                                <form action="{{ route('transaksi.destroy', $trx->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus transaksi ini?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" 
+                                        class="group relative w-8 h-8 flex items-center justify-center bg-red-50 text-red-600 rounded-lg hover:bg-red-500 hover:text-white transition-all duration-200 shadow-sm border border-red-100" 
+                                        title="Hapus Data">
+                                        <i class="fa-solid fa-trash-can"></i>
                                     </button>
                                 </form>
                             </div>
 
-                            <x-modal id="modalEdit{{ $trx->id }}" title="Update Status: {{ $trx->kode_transaksi }}">
+                            <x-modal id="modalEdit{{ $trx->id }}" title="Update #{{ $trx->kode_transaksi }}">
                                 <form action="{{ route('transaksi.update', $trx->id) }}" method="POST">
-                                    @csrf
-                                    @method('PUT')
+                                    @csrf @method('PUT')
                                     
                                     <div class="mb-4 text-left">
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">Status Laundry</label>
-                                        <select name="status_laundry" class="w-full border-slate-300 rounded-lg p-2 bg-slate-50">
-                                            <option value="Pending" {{ $trx->status_laundry == 'Pending' ? 'selected' : '' }}>Pending</option>
-                                            <option value="Proses" {{ $trx->status_laundry == 'Proses' ? 'selected' : '' }}>Sedang Dicuci</option>
-                                            <option value="Selesai" {{ $trx->status_laundry == 'Selesai' ? 'selected' : '' }}>Selesai / Siap</option>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Status Cucian</label>
+                                        <select name="status_laundry" class="w-full border-slate-200 rounded-lg p-2.5 bg-slate-50 focus:ring-2 focus:ring-blue-100 outline-none">
+                                            <option value="Pending" {{ $trx->status_laundry == 'Pending' ? 'selected' : '' }}>Pending (Baru Masuk)</option>
+                                            <option value="Dicuci" {{ $trx->status_laundry == 'Dicuci' ? 'selected' : '' }}>Sedang Dicuci</option>
+                                            <option value="Selesai" {{ $trx->status_laundry == 'Selesai' ? 'selected' : '' }}>Selesai (Siap Diambil)</option>
                                             <option value="Diambil" {{ $trx->status_laundry == 'Diambil' ? 'selected' : '' }}>Sudah Diambil</option>
                                         </select>
                                     </div>
-
+                                    
                                     <div class="mb-6 text-left">
-                                        <label class="block text-sm font-medium text-slate-700 mb-1">Status Pembayaran</label>
-                                        <select name="status_bayar" class="w-full border-slate-300 rounded-lg p-2 bg-slate-50">
-                                            <option value="Belum Lunas" {{ $trx->status_bayar == 'Belum Lunas' ? 'selected' : '' }}>Belum Lunas</option>
+                                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pembayaran</label>
+                                        <select name="status_bayar" class="w-full border-slate-200 rounded-lg p-2.5 bg-slate-50 focus:ring-2 focus:ring-blue-100 outline-none">
+                                            <option value="Belum Bayar" {{ $trx->status_bayar == 'Belum Bayar' ? 'selected' : '' }}>Belum Bayar</option>
+                                            <option value="DP" {{ $trx->status_bayar == 'DP' ? 'selected' : '' }}>DP (Down Payment)</option>
                                             <option value="Lunas" {{ $trx->status_bayar == 'Lunas' ? 'selected' : '' }}>Lunas</option>
                                         </select>
                                     </div>
 
                                     <div class="flex justify-end gap-2">
-                                        <button type="button" onclick="closeModal('modalEdit{{ $trx->id }}')" class="px-4 py-2 bg-slate-200 text-slate-700 rounded hover:bg-slate-300">Batal</button>
-                                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Simpan Perubahan</button>
+                                        <button type="button" onclick="closeModal('modalEdit{{ $trx->id }}')" class="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-lg transition">Batal</button>
+                                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition">Simpan Perubahan</button>
                                     </div>
                                 </form>
                             </x-modal>
-
                         </td>
                     </tr>
                     @empty
-                    <tr>
-                        <td colspan="7" class="text-center p-8 text-slate-400">
-                            <i class="fa-solid fa-box-open text-3xl mb-2"></i>
-                            <p>Belum ada data transaksi.</p>
-                        </td>
-                    </tr>
+                    <tr><td colspan="7" class="text-center p-8 text-slate-400">Belum ada data transaksi.</td></tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        
-        <div class="p-4 bg-white border-t border-slate-100">
-            {{ $transaksis->links() }}
-        </div>
+        <div class="p-4 bg-white border-t border-slate-100">{{ $transaksis->links() }}</div>
     </div>
 
 @endsection

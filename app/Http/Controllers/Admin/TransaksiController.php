@@ -31,33 +31,43 @@ class TransaksiController extends Controller
 
     // 3. PROSES SIMPAN (STORE)
     // SIMPAN DATA BARU
+    // ... method index dll ...
+
     public function store(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'paket_id' => 'required|exists:pakets,id',
+            'user_id' => 'required',
+            'paket_id' => 'required',
             'berat' => 'required|numeric|min:1',
+            'tgl_masuk' => 'required|date',
+            'tgl_selesai' => 'required|date|after_or_equal:tgl_masuk',
+            'status_bayar' => 'required',
         ]);
 
-        // Ambil info paket untuk hitung harga
-        $paket = Paket::findOrFail($request->paket_id);
-        $total = $paket->harga_per_kg * $request->berat;
+        // Hitung Total
+        $paket = Paket::find($request->paket_id);
+        $total_harga = $paket->harga_per_kg * $request->berat;
 
-        // Generate Kode Unik (TRX + TIMESTAMP acak)
-        $kode = 'TRX-' . time(); 
+        // Generate Kode: LND + Random Angka (Contoh: LND8392)
+        $kode = 'LND' . rand(1000, 9999);
 
         Transaksi::create([
             'kode_transaksi' => $kode,
             'user_id' => $request->user_id,
             'paket_id' => $request->paket_id,
             'berat' => $request->berat,
-            'total_harga' => $total, // Total hasil hitungan server (lebih aman)
-            'status_laundry' => 'Pending',
-            'status_bayar' => 'Belum Lunas',
+            'tgl_masuk' => $request->tgl_masuk,     // Input dari form
+            'tgl_selesai' => $request->tgl_selesai, // Input dari form
+            'total_harga' => $total_harga,
+            'status_laundry' => 'Pending',          // Default awal
+            'status_bayar' => $request->status_bayar,
+            'catatan' => $request->catatan,
         ]);
 
         return redirect()->route('transaksi.index')->with('success', 'Transaksi berhasil dibuat!');
     }
+
+    // ... method updateStatus dan destroy tetap sama ...
 // UPDATE STATUS (EDIT via Modal)
     public function updateStatus(Request $request, $id)
     {
@@ -77,5 +87,11 @@ class TransaksiController extends Controller
         $trx->delete();
 
         return back()->with('success', 'Data transaksi telah dihapus permanen.');
+    }
+
+    public function cetakStruk($id)
+    {
+        $trx = Transaksi::with(['user', 'paket'])->findOrFail($id);
+        return view('pages.admin.transaksi.struk', compact('trx'));
     }
 }

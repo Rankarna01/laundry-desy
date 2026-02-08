@@ -62,6 +62,7 @@ Route::middleware(['auth'])->group(function () {
             Route::post('/transaksi', 'store')->name('transaksi.store');
             Route::put('/transaksi/{id}', 'updateStatus')->name('transaksi.update');
             Route::delete('/transaksi/{id}', 'destroy')->name('transaksi.destroy');
+            Route::get('/transaksi/{id}/cetak', 'cetakStruk')->name('transaksi.cetak');
         });
 
         // Pelanggan (Resource)

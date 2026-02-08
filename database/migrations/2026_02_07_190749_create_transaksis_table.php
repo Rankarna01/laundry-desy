@@ -6,27 +6,30 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
-{
-    Schema::create('transaksis', function (Blueprint $table) {
-        $table->id();
-        $table->string('kode_transaksi')->unique(); // TRX-001
-        $table->foreignId('user_id')->constrained('users')->onDelete('cascade'); // Pelanggan
-        $table->foreignId('paket_id')->constrained('pakets'); // Jenis Layanan
-        $table->float('berat'); // Bisa desimal (misal 1.5 kg)
-        $table->integer('total_harga');
-        $table->enum('status_laundry', ['Pending', 'Proses', 'Selesai', 'Diambil'])->default('Pending');
-        $table->enum('status_bayar', ['Belum Lunas', 'Lunas'])->default('Belum Lunas');
-        $table->timestamps();
-    });
-}
+    {
+        Schema::create('transaksis', function (Blueprint $table) {
+            $table->id();
+            $table->string('kode_transaksi')->unique(); // Contoh: LND-001
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('paket_id')->constrained('pakets');
+            
+            // --- KOLOM BARU SESUAI GAMBAR ---
+            $table->date('tgl_masuk');   // Input manual tanggal masuk
+            $table->date('tgl_selesai'); // Estimasi selesai
+            
+            $table->float('berat');
+            $table->integer('total_harga');
+            $table->text('catatan')->nullable();
+            
+            // Status disesuaikan dengan gambar (Dicuci, Diambil, dll)
+            $table->enum('status_laundry', ['Pending', 'Dicuci', 'Selesai', 'Diambil'])->default('Pending');
+            $table->enum('status_bayar', ['Lunas', 'Belum Bayar', 'DP'])->default('Belum Bayar');
+            
+            $table->timestamps();
+        });
+    }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('transaksis');

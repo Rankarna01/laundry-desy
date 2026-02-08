@@ -8,13 +8,17 @@ class Transaksi extends Model
 {
     protected $guarded = ['id'];
 
-    // Relasi ke User (Pelanggan)
+    // Casting agar otomatis jadi object Carbon (Date)
+    protected $casts = [
+        'tgl_masuk' => 'date',
+        'tgl_selesai' => 'date',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    // Relasi ke Paket
     public function paket()
     {
         return $this->belongsTo(Paket::class);
